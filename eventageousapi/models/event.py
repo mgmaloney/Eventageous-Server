@@ -1,6 +1,5 @@
 from django.db import models
 from .user import User
-from .payment_type import Category
 
 class Event(models.Model):
   name = models.CharField(max_length=200, default='')

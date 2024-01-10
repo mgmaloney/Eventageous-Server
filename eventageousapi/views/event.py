@@ -18,7 +18,7 @@ class EventView(ViewSet):
     return Response(serializer.data, many=True)
 
   def create(self, request):
-    seller = User.object.get(id=request.data['sellerId'])
+    seller = User.objects.get(id=request.data['sellerId'])
     event = Event.objects.create(
       name = request.data(['name']),
       description = request.data['description'],
@@ -35,7 +35,7 @@ class EventView(ViewSet):
     return Response(serializer.data, status=status.HTTP_201_CREATED)
   
   def update(self, request, pk):
-    seller = User.object.get(id=request.data['sellerId'])
+    seller = User.objects.get(id=request.data['sellerId'])
     event = Event.objects.get(pk=pk)
     
     event.name = request.data(['name']),
