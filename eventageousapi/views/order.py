@@ -3,9 +3,9 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from rest_framework.decorators import action
-from bangazonapi.models import Order, Item, User, Category, Order_Item
+from eventageousapi.models import Order, Ticket, Order_Ticket
 from .user import UserSerializer
-from .item import ItemSerializer
+from .ticket import TicketSerializer
 
 class OrderView(ViewSet):
   """views for order"""
@@ -34,9 +34,6 @@ class OrderView(ViewSet):
     if 'total' in request.data:  
       order.total = request.data['total']
       
-    if 'shippingAddress' in request.data:
-      order.shipping_address = request.data['shippingAddress']
-      
     if 'billingAddress' in request.data:
       order.billing_address = request.data['billingAddress']
     
@@ -48,22 +45,22 @@ class OrderView(ViewSet):
     
     order.save()
     
-    existing_order_items = Order_Item.objects.all().filter(order=order)
-    if 'items' in request.data and existing_order_items.exists():
-      for order_item in existing_order_items:
-        order_item.delete()
+    existing_order_tickets = Order_Ticket.objects.all().filter(order=order)
+    if 'tickets' in request.data and existing_order_tickets.exists():
+      for order_ticket in existing_order_tickets:
+        order_ticket.delete()
     
-    if 'items' in request.data:
-      item_ids = request.data['items']
+    if 'tickets' in request.data:
+      ticket_ids = request.data['tickets']
     
-      for item_id in item_ids:
-        item = Item.objects.get(id=item_id)
-        Order_Item.objects.create(
-          item = item,
+      for ticket_id in ticket_ids:
+        ticket = Ticket.objects.get(id=ticket_id)
+        Order_Ticket.objects.create(
+          ticket = ticket,
           order = order
         )
     
-    if 'items' in request.data:
+    if 'tickets' in request.data:
       order = Order.objects.get(pk=pk)
       
     serializer = OrderSerializer(order)
@@ -73,16 +70,16 @@ class OrderView(ViewSet):
 
 class OrderSerializer(serializers.ModelSerializer):
   customer = UserSerializer()
-  items = serializers.SerializerMethodField(allow_null=True)
+  tickets = serializers.SerializerMethodField(allow_null=True)
   class Meta:
     model = Order
-    fields = ('id', 'customer', 'payment_type', 'total', 'shipping_address', 'date_completed', 'completed', 'billing_address', 'items')
+    fields = ('id', 'customer', 'payment_type', 'total',  'date_completed', 'completed', 'billing_address', 'tickets')
     
-  def get_items(self, obj):
-    order_items = Order_Item.objects.all().filter(order=obj)
-    items_list = [order_item.item for order_item in order_items]
-    serializer = ItemSerializer(items_list, many=True)
-    if len(items_list) > 0:
+  def get_tickets(self, obj):
+    order_tickets = Order_Ticket.objects.all().filter(order=obj)
+    tickets_list = [order_ticket.ticket for order_ticket in order_tickets]
+    serializer = TicketSerializer(tickets_list, many=True)
+    if len(tickets_list) > 0:
       return serializer.data
     else:
       return []
