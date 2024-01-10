@@ -3,7 +3,6 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from eventageousapi.models import User, Ticket, Event
-from .payment_type import CategorySerializer
 
 class TicketView(ViewSet):
   """views for ticket"""

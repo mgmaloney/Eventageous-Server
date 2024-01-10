@@ -5,7 +5,7 @@ from rest_framework import serializers, status
 from eventageousapi.models import Payment_Type
 
 class Payment_TypeView(ViewSet):
-  """views for category"""
+  """views for payment"""
   def list(self, request):
     payment_types = Payment_Type.objects.all()
     serializer = Payment_TypeSerializer(payment_types, many=True)

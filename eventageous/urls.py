@@ -18,14 +18,15 @@ from django.contrib import admin
 from django.urls import path
 from django.conf.urls import include
 from rest_framework import routers
-from eventageousapi.views import register_user, check_user, CategoryView, UserView, OrderView, ItemView
+from eventageousapi.views import register_user, check_user, Payment_TypeView, UserView, OrderView, TicketView, EventView
 
 router = routers.DefaultRouter(trailing_slash=False)
 
-router.register(r'categories', CategoryView, 'category')
+router.register(r'events', EventView, 'event')
 router.register(r'users', UserView, 'user')
 router.register(r'orders', OrderView, 'order')
-router.register(r'items', ItemView, 'item')
+router.register(r'tickets', TicketView, 'ticket')
+router.register(r'payment_types', Payment_TypeView, 'payment_type')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
