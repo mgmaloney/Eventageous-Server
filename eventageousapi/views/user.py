@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework import serializers, status
 from rest_framework.decorators import action
 from django.db.models import Q
-from bangazonapi.models import User, Order, Order_Item
-from .item import ItemSerializer
+from eventageousapi.models import User, Order, Order_Ticket
+from .ticket import TicketSerializer
 
 class UserView(ViewSet):
   @action(methods=['POST'], detail=True)
@@ -41,13 +41,13 @@ class OrderSerializer(serializers.ModelSerializer):
   items = serializers.SerializerMethodField(allow_null=True)
   class Meta:
     model = Order
-    fields = ('id', 'customer', 'payment_type', 'total', 'billing_address', 'shipping_address', 'date_completed', 'completed', 'items')
+    fields = ('id', 'customer', 'payment_type', 'total', 'billing_address', 'date_completed', 'completed', 'tickets')
     
-  def get_items(self, obj):
-    order_items = Order_Item.objects.all().filter(order=obj)
-    items_list = [order_item.item for order_item in order_items]
-    serializer = ItemSerializer(items_list, many=True)
-    if len(items_list) > 0:
+  def get_tickets(self, obj):
+    order_tickets = Order_Ticket.objects.all().filter(order=obj)
+    tickets_list = [order_ticket.ticket for order_ticket in order_tickets]
+    serializer = TicketSerializer(tickets_list, many=True)
+    if len(tickets_list) > 0:
       return serializer.data
     else:
       return []
