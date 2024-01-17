@@ -79,7 +79,10 @@ class EventSerializer(serializers.ModelSerializer):
     fields = ('id', 'name', 'description', 'date', 'tickets_available', 'image_url', 'seller', 'ticket')
     
   def get_ticket(self, obj):
-    ticket = Ticket.objects.get(event=obj)
-    serializer = TicketSerializer(ticket)
-    return serializer.data
+    try:
+      ticket = Ticket.objects.get(event=obj)
+      serializer = TicketSerializer(ticket)
+      return serializer.data
+    except:
+      return None
       
