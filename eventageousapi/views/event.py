@@ -3,7 +3,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from rest_framework.decorators import action
-from eventageousapi.models import Event, User, Ticket
+from eventageousapi.models import Event, User, Ticket, Order_Ticket
 
 class EventView(ViewSet):
   """"views for events"""
@@ -57,8 +57,13 @@ class EventView(ViewSet):
   
   def destroy(self, request, pk):
     event = Event.objects.get(pk=pk)
-    event.delete()
-    return Response(None, status=status.HTTP_204_NO_CONTENT)
+    ticket = Ticket.objects.get(event=event)
+    order_tickets = Order_Ticket.objects.filter(ticket=ticket) 
+    if len(order_tickets) > 0:
+      return Response({"error": "event has tickets sold"}, status=status.HTTP_403_FORBIDDEN)
+    else:
+      event.delete()
+      return Response(None, status=status.HTTP_204_NO_CONTENT)
       
 
 class UserSerializer(serializers.ModelSerializer):
