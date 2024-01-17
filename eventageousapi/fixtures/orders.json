@@ -1,0 +1,14 @@
+[
+  {
+    "model": "eventageousapi.order",
+    "pk": 1,
+    "fields": {
+      "customer": 1,
+      "payment_type": 1,
+      "total": 6,
+      "billing_address": "34 Wrestling Way, Sierra, NV",
+      "date_completed": "2023-12-21 03:44:00",
+      "completed": true
+    }
+  }
+]

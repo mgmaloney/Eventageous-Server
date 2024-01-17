@@ -1,0 +1,23 @@
+[
+  {
+    "model": "eventageousapi.payment_type",
+    "pk": 1,
+    "fields": {
+      "name": "Credit"
+    }
+  },
+  {
+    "model": "eventageousapi.payment_type",
+    "pk": 2,
+    "fields": {
+      "name": "Mobile"
+    }
+  },
+  {
+    "model": "eventageousapi.payment_type",
+    "pk": 3,
+    "fields": {
+      "name": "PayPal"
+    }
+  }
+]

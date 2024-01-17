@@ -15,16 +15,16 @@ class EventView(ViewSet):
   def list(self, request):
     events = Event.objects.all()
     serializer = EventSerializer(events, many=True)
-    return Response(serializer.data, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
   def create(self, request):
     seller = User.objects.get(id=request.data['sellerId'])
     event = Event.objects.create(
-      name = request.data(['name']),
+      name = request.data['name'],
       description = request.data['description'],
       tickets_available  = request.data['ticketsAvailable'],
       date = request.data['date'],
-      image_url = request.data['image_url'],
+      image_url = request.data['imageUrl'],
       seller = seller    
     )
     Ticket.objects.create(
@@ -38,11 +38,11 @@ class EventView(ViewSet):
     seller = User.objects.get(id=request.data['sellerId'])
     event = Event.objects.get(pk=pk)
     
-    event.name = request.data(['name']),
+    event.name = request.data['name'],
     event.description = request.data['description'],
     event.tickets_available  = request.data['ticketsAvailable'],
     event.date = request.data['date'],
-    event.image_url = request.data['image_url'],
+    event.image_url = request.data['imageUrl'],
     event.seller = seller
     
     event.save()
@@ -61,8 +61,25 @@ class EventView(ViewSet):
     return Response(None, status=status.HTTP_204_NO_CONTENT)
       
 
+class UserSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = User
+    fields = ('id', 'uid', 'first_name', 'last_name', 'bio', 'email', 'address', 'phone_number', 'is_seller')
+
+class TicketSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Ticket
+    fields = ('price', )
+
 class EventSerializer(serializers.ModelSerializer):
-  
+  seller = UserSerializer()
+  ticket = serializers.SerializerMethodField()
   class Meta:
     model = Event
-    fields = ('id')
+    fields = ('id', 'name', 'description', 'date', 'tickets_available', 'image_url', 'seller', 'ticket')
+    
+  def get_ticket(self, obj):
+    ticket = Ticket.objects.get(event=obj)
+    serializer = TicketSerializer(ticket)
+    return serializer.data
+      

@@ -1,0 +1,10 @@
+[
+  {
+    "model": "eventageousapi.order_ticket",
+    "pk": 1,
+    "fields": {
+      "order": 1,
+      "ticket": 1
+    }
+  }
+]

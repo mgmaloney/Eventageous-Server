@@ -1,0 +1,10 @@
+[
+  {
+    "model": "eventageousapi.ticket",
+    "pk": 1,
+    "fields": {
+      "event": 1,
+      "price": 12
+    }
+  }
+]
