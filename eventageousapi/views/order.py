@@ -78,8 +78,53 @@ class OrderView(ViewSet):
     serializer = TicketSerializer(discrete_event_tickets, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
   
-  # @action(methods=['put'], detail=True)
-  # def add_ticket(self, request, pk):
+  @action(methods=['put'], detail=True)
+  def add_ticket(self, request, pk):
+    order = Order.objects.get(pk=pk)
+    event = Event.objects.get(id=request.data['eventId'])
+    ticket = Ticket.objects.get(event=event)
+    tickets_to_create = request.query_params.get('multiple', None)
+    
+    if tickets_to_create is None:
+      Order_Ticket.objects.create(
+        order = order,
+        ticket = ticket
+      )
+    else:
+      existing_order_tickets = Order_Ticket.objects.all().filter(order=order)
+      for order_ticket in existing_order_tickets:
+        order_ticket.delete()
+        
+      created_count = 0
+      while created_count < int(tickets_to_create):
+        Order_Ticket.objects.create(
+        order = order,
+        ticket = ticket
+        )
+        
+    serializer = OrderSerializer(order)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+  
+  @action(methods=['put'], detail=True)
+  def remove_ticket(self, request, pk):
+    order = Order.objects.get(pk=pk)
+    ticket = Ticket.objects.get(id=request.data['ticketId'])
+    order_tickets = Order_Ticket.objects.all().filter(order=order, ticket=ticket)
+    order_tickets_list = [order_ticket for order_ticket in order_tickets]
+    if request.query_params.get('all') == 'True':
+      for order_ticket in order_tickets_list:
+        order_ticket.delete()
+        
+    else:
+      delete_count = 0
+      while delete_count < 0:
+        for order_ticket in order_tickets:
+          order_ticket.delete()
+          delete_count += 1
+      
+    serializer = OrderSerializer(order)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+  
     
     
 class EventSerializer(serializers.ModelSerializer):
