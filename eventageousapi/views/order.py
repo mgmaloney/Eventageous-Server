@@ -3,7 +3,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from rest_framework.decorators import action
-from eventageousapi.models import Order, Ticket, Order_Ticket
+from eventageousapi.models import Order, Ticket, Order_Ticket, Event
 from .user import UserSerializer
 from .ticket import TicketSerializer
 
@@ -66,7 +66,33 @@ class OrderView(ViewSet):
     serializer = OrderSerializer(order)
     
     return Response(serializer.data, status=status.HTTP_200_OK)
+  
+  @action(methods=['get'], detail=True)
+  def order_ticket_events(self, request, pk):
+    order = Order.objects.get(pk=pk)
+    order_tickets = [order_ticket.ticket for order_ticket in order.order_tickets.all()]
+    discrete_event_tickets = []
+    for ticket in order_tickets:
+      if ticket not in discrete_event_tickets:
+        discrete_event_tickets.append(ticket)
+    serializer = TicketSerializer(discrete_event_tickets, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+  
+  # @action(methods=['put'], detail=True)
+  # def add_ticket(self, request, pk):
     
+    
+class EventSerializer(serializers.ModelSerializer):
+  seller = UserSerializer(many=False)
+  class Meta:
+    model = Event
+    fields = ('id', 'name', 'description', 'tickets_available', 'date', 'image_url', 'seller')
+
+class TicketSerializer(serializers.ModelSerializer):
+  event = EventSerializer(many=False)
+  class Meta:
+    model = Ticket
+    fields = ('id', 'event', 'price')  
 
 class OrderSerializer(serializers.ModelSerializer):
   customer = UserSerializer()
