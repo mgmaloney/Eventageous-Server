@@ -3,7 +3,8 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from rest_framework.decorators import action
-from eventageousapi.models import Order, Ticket, Order_Ticket, Event
+from eventageousapi.models import Order, Ticket, Order_Ticket, Event, User
+from django.db.models import Q
 from .user import UserSerializer
 from .ticket import TicketSerializer
 
@@ -80,7 +81,19 @@ class OrderView(ViewSet):
   
   @action(methods=['put'], detail=True)
   def add_ticket(self, request, pk):
-    order = Order.objects.get(pk=pk)
+    customer = User.objects.get(id=request.data['userId'])
+    ticket = Ticket.objects.get(id=request.data['ticketId'])
+    order = ''
+    order_query = Order.objects.filter(Q(customer=customer) & Q(completed=False))
+    if order_query.exists():
+      assert len(order_query) == 1
+      if len(order_query) == 1:
+        order = list(order_query)[0]
+    else:
+      order = Order.objects.create(
+        customer = customer,
+      )
+      
     event = Event.objects.get(id=request.data['eventId'])
     ticket = Ticket.objects.get(event=event)
     tickets_to_create = request.query_params.get('multiple', None)
@@ -101,14 +114,26 @@ class OrderView(ViewSet):
         order = order,
         ticket = ticket
         )
+        created_count += 1
         
     serializer = OrderSerializer(order)
     return Response(serializer.data, status=status.HTTP_200_OK)
   
   @action(methods=['put'], detail=True)
   def remove_ticket(self, request, pk):
-    order = Order.objects.get(pk=pk)
-    ticket = Ticket.objects.get(id=request.data['ticketId'])
+    customer = User.objects.get(id=request.data['userId'])
+    ticket = Ticket.objects.get(event=request.data['ticketId'])
+    order = ''
+    order_query = Order.objects.filter(Q(customer=customer) & Q(completed=False))
+    if order_query.exists():
+      assert len(order_query) == 1
+      if len(order_query) == 1:
+        order = list(order_query)[0]
+    else:
+      order = Order.objects.create(
+        customer = customer,
+      )
+        
     order_tickets = Order_Ticket.objects.all().filter(order=order, ticket=ticket)
     order_tickets_list = [order_ticket for order_ticket in order_tickets]
     if request.query_params.get('all') == 'True':
@@ -121,7 +146,9 @@ class OrderView(ViewSet):
         for order_ticket in order_tickets:
           order_ticket.delete()
           delete_count += 1
-      
+    
+    # delete all in case of errors
+    # Order_Ticket.objects.all().delete()
     serializer = OrderSerializer(order)
     return Response(serializer.data, status=status.HTTP_200_OK)
   

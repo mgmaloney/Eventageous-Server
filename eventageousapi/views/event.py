@@ -74,7 +74,7 @@ class UserSerializer(serializers.ModelSerializer):
 class TicketSerializer(serializers.ModelSerializer):
   class Meta:
     model = Ticket
-    fields = ('price', )
+    fields = ('id', 'price' )
 
 class EventSerializer(serializers.ModelSerializer):
   seller = UserSerializer()
