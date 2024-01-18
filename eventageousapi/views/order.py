@@ -3,7 +3,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from rest_framework.decorators import action
-from eventageousapi.models import Order, Ticket, Order_Ticket, Event, User
+from eventageousapi.models import Order, Ticket, Order_Ticket, Event, User, Payment_Type
 from django.db.models import Q
 from .user import UserSerializer
 from .ticket import TicketSerializer
@@ -30,7 +30,8 @@ class OrderView(ViewSet):
     order = Order.objects.get(pk=pk)
     
     if 'paymentType' in request.data:
-      order.payment_type = request.data['paymentType']
+      payment_type = Payment_Type.objects.get(id=request.data['paymentType'])
+      order.payment_type = payment_type
     
     if 'total' in request.data:  
       order.total = request.data['total']
@@ -45,25 +46,7 @@ class OrderView(ViewSet):
       order.completed = request.data['completed']
     
     order.save()
-    
-    existing_order_tickets = Order_Ticket.objects.all().filter(order=order)
-    if 'tickets' in request.data and existing_order_tickets.exists():
-      for order_ticket in existing_order_tickets:
-        order_ticket.delete()
-    
-    if 'tickets' in request.data:
-      ticket_ids = request.data['tickets']
-    
-      for ticket_id in ticket_ids:
-        ticket = Ticket.objects.get(id=ticket_id)
-        Order_Ticket.objects.create(
-          ticket = ticket,
-          order = order
-        )
-    
-    if 'tickets' in request.data:
-      order = Order.objects.get(pk=pk)
-      
+          
     serializer = OrderSerializer(order)
     
     return Response(serializer.data, status=status.HTTP_200_OK)
