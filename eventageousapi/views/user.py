@@ -38,7 +38,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
   customer = UserSerializer()
-  items = serializers.SerializerMethodField(allow_null=True)
+  tickets = serializers.SerializerMethodField(allow_null=True)
   class Meta:
     model = Order
     fields = ('id', 'customer', 'payment_type', 'total', 'billing_address', 'date_completed', 'completed', 'tickets')

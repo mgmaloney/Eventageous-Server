@@ -3,7 +3,8 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from rest_framework.decorators import action
-from eventageousapi.models import Order, Ticket, Order_Ticket
+from eventageousapi.models import Order, Ticket, Order_Ticket, Event, User, Payment_Type
+from django.db.models import Q
 from .user import UserSerializer
 from .ticket import TicketSerializer
 
@@ -18,9 +19,20 @@ class OrderView(ViewSet):
     orders = Order.objects.all()
     
     customer = request.query_params.get('customerId', None)
+    seller = request.query_params.get('sellerId', None)
     
     if request.query_params.get('completed', None) is not None and customer is not None:
-      orders = orders.filter(completed = True, customer_id = customer)
+      orders = Order.objects.filter(completed = 'True', customer_id = customer)
+    
+    # for getting completed orders that have the sellers events
+    # if request.query_params.get('completed', None) is not None and seller is not None:
+    #   orders = Order.objects.filter(completed = True)
+    #   completed_seller_orders = []
+    #   for order in orders:
+    #     for order_ticket in order.order_tickets:
+    #       order_ticket.ticket
+      
+      
     
     serializer = OrderSerializer(orders, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -29,7 +41,8 @@ class OrderView(ViewSet):
     order = Order.objects.get(pk=pk)
     
     if 'paymentType' in request.data:
-      order.payment_type = request.data['paymentType']
+      payment_type = Payment_Type.objects.get(id=request.data['paymentType'])
+      order.payment_type = payment_type
     
     if 'total' in request.data:  
       order.total = request.data['total']
@@ -44,29 +57,108 @@ class OrderView(ViewSet):
       order.completed = request.data['completed']
     
     order.save()
-    
-    existing_order_tickets = Order_Ticket.objects.all().filter(order=order)
-    if 'tickets' in request.data and existing_order_tickets.exists():
-      for order_ticket in existing_order_tickets:
-        order_ticket.delete()
-    
-    if 'tickets' in request.data:
-      ticket_ids = request.data['tickets']
-    
-      for ticket_id in ticket_ids:
-        ticket = Ticket.objects.get(id=ticket_id)
-        Order_Ticket.objects.create(
-          ticket = ticket,
-          order = order
-        )
-    
-    if 'tickets' in request.data:
-      order = Order.objects.get(pk=pk)
-      
+          
     serializer = OrderSerializer(order)
     
     return Response(serializer.data, status=status.HTTP_200_OK)
+  
+  @action(methods=['get'], detail=True)
+  def order_ticket_events(self, request, pk):
+    order = Order.objects.get(pk=pk)
+    order_tickets = [order_ticket.ticket for order_ticket in order.order_tickets.all()]
+    discrete_event_tickets = []
+    for ticket in order_tickets:
+      if ticket not in discrete_event_tickets:
+        discrete_event_tickets.append(ticket)
+    serializer = TicketSerializer(discrete_event_tickets, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+  
+  @action(methods=['put'], detail=True)
+  def add_ticket(self, request, pk):
+    customer = User.objects.get(id=request.data['userId'])
+    ticket = Ticket.objects.get(id=request.data['ticketId'])
+    order = ''
+    order_query = Order.objects.filter(Q(customer=customer) & Q(completed=False))
+    if order_query.exists():
+      assert len(order_query) == 1
+      if len(order_query) == 1:
+        order = list(order_query)[0]
+    else:
+      order = Order.objects.create(
+        customer = customer,
+      )
+      
+    event = Event.objects.get(id=request.data['eventId'])
+    ticket = Ticket.objects.get(event=event)
+    tickets_to_create = request.query_params.get('multiple', None)
     
+    if tickets_to_create is None:
+      Order_Ticket.objects.create(
+        order = order,
+        ticket = ticket
+      )
+    else:
+      existing_order_tickets = Order_Ticket.objects.all().filter(order=order)
+      for order_ticket in existing_order_tickets:
+        order_ticket.delete()
+        
+      created_count = 0
+      while created_count < int(tickets_to_create):
+        Order_Ticket.objects.create(
+        order = order,
+        ticket = ticket
+        )
+        created_count += 1
+        
+    serializer = OrderSerializer(order)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+  
+  @action(methods=['put'], detail=True)
+  def remove_ticket(self, request, pk):
+    customer = User.objects.get(id=request.data['userId'])
+    ticket = Ticket.objects.get(event=request.data['ticketId'])
+    order = ''
+    order_query = Order.objects.filter(Q(customer=customer) & Q(completed=False))
+    if order_query.exists():
+      assert len(order_query) == 1
+      if len(order_query) == 1:
+        order = list(order_query)[0]
+    else:
+      order = Order.objects.create(
+        customer = customer,
+      )
+        
+    order_tickets = Order_Ticket.objects.all().filter(order=order, ticket=ticket)
+    order_tickets_list = [order_ticket for order_ticket in order_tickets]
+    if request.query_params.get('all') == 'True':
+      for order_ticket in order_tickets_list:
+        order_ticket.delete()
+        
+    else:
+      delete_count = 0
+      while delete_count < 0:
+        for order_ticket in order_tickets:
+          order_ticket.delete()
+          delete_count += 1
+    
+    # delete all in case of errors
+    # Order_Ticket.objects.all().delete()
+    serializer = OrderSerializer(order)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+  
+    
+    
+class EventSerializer(serializers.ModelSerializer):
+  seller = UserSerializer(many=False)
+  class Meta:
+    model = Event
+    fields = ('id', 'name', 'description', 'tickets_available', 'date', 'image_url', 'seller')
+
+class TicketSerializer(serializers.ModelSerializer):
+  event = EventSerializer(many=False)
+  class Meta:
+    model = Ticket
+    fields = ('id', 'event', 'price')  
 
 class OrderSerializer(serializers.ModelSerializer):
   customer = UserSerializer()

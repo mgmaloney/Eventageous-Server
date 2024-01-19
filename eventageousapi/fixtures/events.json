@@ -1,0 +1,13 @@
+[
+  {
+    "model": "eventageousapi.event",
+    "pk": 1,
+    "fields": {
+      "name": "John's Open Mic Night",
+      "description": "A night of dry humor with John",
+      "date": "2024-02-21 03:44:00",
+      "tickets_available": 300,
+      "seller": 1
+    }
+  }
+]

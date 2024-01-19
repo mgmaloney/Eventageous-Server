@@ -2,6 +2,7 @@ from django.http import HttpResponseServerError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
+from rest_framework.decorators import action
 from eventageousapi.models import User, Ticket, Event
 
 class TicketView(ViewSet):
@@ -13,6 +14,7 @@ class TicketView(ViewSet):
   
   def list(self, request):
     tickets = Ticket.objects.all()
+    
     
     serializer = TicketSerializer(tickets, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -42,6 +44,9 @@ class TicketView(ViewSet):
     ticket = Ticket.objects.get(pk=pk)
     ticket.delete()
     return Response(None, status=status.HTTP_204_NO_CONTENT)
+  
+
+    
 
 class UserSerializer(serializers.ModelSerializer):
   class Meta:

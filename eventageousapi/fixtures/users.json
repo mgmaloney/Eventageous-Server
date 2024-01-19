@@ -1,0 +1,30 @@
+[
+  {
+    "model": "eventageousapi.user",
+    "pk": 1,
+    "fields": {
+      "uid": 1,
+      "bio": "I sell cat toys",
+      "first_name": "John",
+      "last_name": "Cena",
+      "email": "john@john.com",
+      "address": "12 Wrestling Blvd, Las Vegas, NV",
+      "phone_number": "555-555-5555",
+      "is_seller": true
+    }
+  },
+  {
+    "model": "eventageousapi.user",
+    "pk": 2,
+    "fields": {
+      "uid": 2,
+      "bio": "I sell fruit",
+      "first_name": "Pine",
+      "last_name": "Apple",
+      "email": "pine@apple.com",
+      "address": "12 Fruit Way, Houston, TX",
+      "phone_number": "555-555-5555",
+      "is_seller": true
+    }
+  }
+]
