@@ -15,6 +15,7 @@ class TicketView(ViewSet):
   def list(self, request):
     tickets = Ticket.objects.all()
     
+    
     serializer = TicketSerializer(tickets, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
   

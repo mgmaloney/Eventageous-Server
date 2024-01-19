@@ -14,6 +14,10 @@ class EventView(ViewSet):
   
   def list(self, request):
     events = Event.objects.all()
+    sellerId = request.query_params.get('sellerId', None)
+    if sellerId is not None:
+      seller = User.objects.get(pk=sellerId)
+      events = Event.objects.filter(seller=seller)
     serializer = EventSerializer(events, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 

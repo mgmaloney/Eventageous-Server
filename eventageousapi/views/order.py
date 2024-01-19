@@ -19,9 +19,20 @@ class OrderView(ViewSet):
     orders = Order.objects.all()
     
     customer = request.query_params.get('customerId', None)
+    seller = request.query_params.get('sellerId', None)
     
     if request.query_params.get('completed', None) is not None and customer is not None:
-      orders = orders.filter(completed = True, customer_id = customer)
+      orders = Order.objects.filter(completed = 'True', customer_id = customer)
+    
+    # for getting completed orders that have the sellers events
+    # if request.query_params.get('completed', None) is not None and seller is not None:
+    #   orders = Order.objects.filter(completed = True)
+    #   completed_seller_orders = []
+    #   for order in orders:
+    #     for order_ticket in order.order_tickets:
+    #       order_ticket.ticket
+      
+      
     
     serializer = OrderSerializer(orders, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
