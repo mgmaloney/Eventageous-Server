@@ -22,18 +22,8 @@ class OrderView(ViewSet):
     seller = request.query_params.get('sellerId', None)
     
     if request.query_params.get('completed', None) is not None and customer is not None:
-      orders = Order.objects.filter(completed = 'True', customer_id = customer)
-    
-    # for getting completed orders that have the sellers events
-    # if request.query_params.get('completed', None) is not None and seller is not None:
-    #   orders = Order.objects.filter(completed = True)
-    #   completed_seller_orders = []
-    #   for order in orders:
-    #     for order_ticket in order.order_tickets:
-    #       order_ticket.ticket
+      orders = Order.objects.filter(completed = 'True', customer_id = customer)    
       
-      
-    
     serializer = OrderSerializer(orders, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
   
@@ -117,21 +107,12 @@ class OrderView(ViewSet):
   def remove_ticket(self, request, pk):
     customer = User.objects.get(id=request.data['userId'])
     ticket = Ticket.objects.get(event=request.data['ticketId'])
-    order = ''
-    order_query = Order.objects.filter(Q(customer=customer) & Q(completed=False))
-    if order_query.exists():
-      assert len(order_query) == 1
-      if len(order_query) == 1:
-        order = list(order_query)[0]
-    else:
-      order = Order.objects.create(
-        customer = customer,
-      )
+    order = Order.objects.get(pk=pk)
         
-    order_tickets = Order_Ticket.objects.all().filter(order=order, ticket=ticket)
+    order_tickets = Order_Ticket.objects.filter(order=order, ticket=ticket)
     order_tickets_list = [order_ticket for order_ticket in order_tickets]
     if request.query_params.get('all') == 'True':
-      for order_ticket in order_tickets_list:
+      for order_ticket in order_tickets:
         order_ticket.delete()
         
     else:
@@ -140,13 +121,19 @@ class OrderView(ViewSet):
         for order_ticket in order_tickets:
           order_ticket.delete()
           delete_count += 1
-    
-    # delete all in case of errors
-    # Order_Ticket.objects.all().delete()
+          
     serializer = OrderSerializer(order)
     return Response(serializer.data, status=status.HTTP_200_OK)
   
-    
+
+  @action(methods=['delete'], detail=False)
+  def delete_order_tickets(self, request):
+    order = Order.objects.get(id=request.data['orderId'])
+    ticket = Ticket.objects.get(event=request.data['ticketId'])
+    order_tickets = Order_Ticket.objects.all().filter(order=order, ticket=ticket)
+    for order_ticket in order_tickets:
+      order_ticket.delete()
+    return Response(None, status=status.HTTP_204_NO_CONTENT) 
     
 class EventSerializer(serializers.ModelSerializer):
   seller = UserSerializer(many=False)
@@ -158,10 +145,16 @@ class TicketSerializer(serializers.ModelSerializer):
   event = EventSerializer(many=False)
   class Meta:
     model = Ticket
-    fields = ('id', 'event', 'price')  
+    fields = ('id', 'event', 'price') 
+     
+class Payment_TypeSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Payment_Type
+    fields = ('id', 'name')  
 
 class OrderSerializer(serializers.ModelSerializer):
   customer = UserSerializer()
+  payment_type = Payment_TypeSerializer()
   tickets = serializers.SerializerMethodField(allow_null=True)
   class Meta:
     model = Order
