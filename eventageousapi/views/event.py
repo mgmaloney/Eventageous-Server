@@ -42,17 +42,17 @@ class EventView(ViewSet):
     seller = User.objects.get(id=request.data['sellerId'])
     event = Event.objects.get(pk=pk)
     
-    event.name = request.data['name'],
-    event.description = request.data['description'],
-    event.tickets_available  = request.data['ticketsAvailable'],
-    event.date = request.data['date'],
-    event.image_url = request.data['imageUrl'],
+    event.name = request.data['name']
+    event.description = request.data['description']
+    event.tickets_available  = request.data['ticketsAvailable']
+    event.date = request.data['date']
+    event.image_url = request.data['imageUrl']
     event.seller = seller
     
     event.save()
     
     ticket = Ticket.objects.get(event=event)
-    ticket.price = request.data['price']
+    ticket.price = request.data['ticketPrice']
     ticket.save()
    
     serializer = EventSerializer(event)
@@ -67,6 +67,7 @@ class EventView(ViewSet):
       return Response({"error": "event has tickets sold"}, status=status.HTTP_403_FORBIDDEN)
     else:
       event.delete()
+      ticket.delete()
       return Response(None, status=status.HTTP_204_NO_CONTENT)
       
 
@@ -78,7 +79,7 @@ class UserSerializer(serializers.ModelSerializer):
 class TicketSerializer(serializers.ModelSerializer):
   class Meta:
     model = Ticket
-    fields = ('id', 'price' )
+    fields = ('id', 'price')
 
 class EventSerializer(serializers.ModelSerializer):
   seller = UserSerializer()

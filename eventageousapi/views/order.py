@@ -64,13 +64,21 @@ class OrderView(ViewSet):
     return Response(serializer.data, status=status.HTTP_200_OK)
   
   @action(methods=['put'], detail=True)
+  def ticket_number_in_cart(self, request, pk):
+    order = Order.objects.get(pk=pk)
+    ticket = Ticket.objects.get(id=request.data['ticketId'])
+    order_tickets = Order_Ticket.objects.all().filter(Q(order=order) & Q(ticket=ticket))
+    return Response({"numberInCart": len(order_tickets)}, status=status.HTTP_200_OK)
+    
+    
+  
+  @action(methods=['put'], detail=True)
   def add_ticket(self, request, pk):
     customer = User.objects.get(id=request.data['userId'])
     ticket = Ticket.objects.get(id=request.data['ticketId'])
     order = ''
     order_query = Order.objects.filter(Q(customer=customer) & Q(completed=False))
     if order_query.exists():
-      assert len(order_query) == 1
       if len(order_query) == 1:
         order = list(order_query)[0]
     else:
@@ -90,7 +98,8 @@ class OrderView(ViewSet):
     else:
       existing_order_tickets = Order_Ticket.objects.all().filter(order=order)
       for order_ticket in existing_order_tickets:
-        order_ticket.delete()
+        if order_ticket.ticket.id == ticket.id:
+          order_ticket.delete()
         
       created_count = 0
       while created_count < int(tickets_to_create):
@@ -106,7 +115,7 @@ class OrderView(ViewSet):
   @action(methods=['put'], detail=True)
   def remove_ticket(self, request, pk):
     customer = User.objects.get(id=request.data['userId'])
-    ticket = Ticket.objects.get(event=request.data['ticketId'])
+    ticket = Ticket.objects.get(id=request.data['ticketId'])
     order = Order.objects.get(pk=pk)
         
     order_tickets = Order_Ticket.objects.filter(order=order, ticket=ticket)
