@@ -12,18 +12,26 @@ class UserView(ViewSet):
   def has_order(self, request, pk):
     customer = User.objects.get(pk=pk)
     order_query = Order.objects.filter(Q(customer=customer) & Q(completed=False))
-    if order_query.exists():
+    order_query_list =list(order_query)
+    if order_query.count() > 0:
       if len(order_query) == 1:
         order = list(order_query)[0]
         serializer = OrderSerializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
+      elif len(order_query) > 1:
+        order = list(order_query)[0]
+        order_to_delete = list(order_query)[1]
+        order_to_delete.delete()
+        serializer = OrderSerializer(order)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
     
-      else:
-        new_order = Order.objects.create(
-          customer = customer,
-        )
-        serializer = OrderSerializer(new_order)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    else:
+      new_order = Order.objects.create(
+        customer = customer,
+      )
+      serializer = OrderSerializer(new_order)
+      return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     
 
