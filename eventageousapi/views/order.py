@@ -52,6 +52,16 @@ class OrderView(ViewSet):
     
     return Response(serializer.data, status=status.HTTP_200_OK)
   
+  @action(methods=['delete'], detail=False)
+  def delete_open_orders(self, request):
+    customer = User.objects.get(id=request.data['userId'])
+    order_query = Order.objects.filter(Q(customer=customer) & Q(completed=False))
+    for order in order_query:
+      order.delete()
+    return Response(None, status=status.HTTP_204_NO_CONTENT)
+    
+
+  
   @action(methods=['get'], detail=True)
   def order_ticket_events(self, request, pk):
     order = Order.objects.get(pk=pk)
@@ -78,13 +88,20 @@ class OrderView(ViewSet):
     ticket = Ticket.objects.get(id=request.data['ticketId'])
     order = ''
     order_query = Order.objects.filter(Q(customer=customer) & Q(completed=False))
-    if order_query.exists():
+    if order_query.count() > 0:
+      length = len(order_query)
       if len(order_query) == 1:
         order = list(order_query)[0]
-    else:
-      order = Order.objects.create(
-        customer = customer,
-      )
+        
+      elif len(order_query) > 1:
+        order = list(order_query)[0]
+        order_to_delete = list(order_query)[1]
+        order_to_delete.delete()
+        
+      else:
+        order = Order.objects.create(
+          customer = customer,
+        )
       
     event = Event.objects.get(id=request.data['eventId'])
     ticket = Ticket.objects.get(event=event)
